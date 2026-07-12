@@ -178,8 +178,13 @@ async def mcp_post(request: Request):
                     status_code=401,
                     headers={**_cors_headers(), "mcp-session-id": session_id},
                 )
-            content = await _dispatch_tool(name, arguments, session_id)
-            result = {"content": content}
+            try:
+                content = await _dispatch_tool(name, arguments, session_id)
+                result = {"content": content}
+            except ValueError as exc:
+                # Validation errors (unknown dataset/column/id) go back as
+                # tool results per MCP spec, so the agent can read and retry.
+                result = {"content": [{"type": "text", "text": str(exc)}], "isError": True}
         else:
             return JSONResponse(
                 {"jsonrpc": "2.0", "id": rpc_id,

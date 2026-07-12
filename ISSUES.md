@@ -83,18 +83,18 @@ Kopiera från `../agentanbud`: `app/db.py`, `app/main.py` (struktur), `mcp_http.
 **Mål:** en agent kan lista, beskriva och söka i datan.
 
 ### #12 MCP HTTP-transport bootar  · infra · S
-- [ ] `mcp_http.py` monterad; `GET /mcp` visar serverinfo + tools_count
-- [ ] `initialize` / `tools/list` / `tools/call` fungerar (kopierat mönster)
+- [x] `mcp_http.py` monterad; `GET /mcp` visar serverinfo + tools_count
+- [x] `initialize` / `tools/list` / `tools/call` fungerar (kopierat mönster)
 
 ### #13 Verktyg: list_datasets + describe_dataset  · feature · M
-- [ ] `list_datasets` → namn, slug, antal rader
-- [ ] `describe_dataset(slug)` → exponerade kolumner, antal, 2–3 exempelrader
+- [x] `list_datasets` → namn, slug, antal rader
+- [x] `describe_dataset(slug)` → exponerade kolumner, antal, 2–3 exempelrader
 
 ### #14 Verktyg: search_rows + get_row  · feature · M
-- [ ] `search_rows(dataset, query, filters?, limit?)` → matchande rader (bara exposed_columns)
-- [ ] `get_row(dataset, id)` → en rad
-- [ ] Alla svar respekterar `exposed_columns`
-- [ ] Verifierat live: en riktig MCP-session hämtar felkoder
+- [x] `search_rows(dataset, query, filters?, limit?)` → matchande rader (bara exposed_columns)
+- [x] `get_row(dataset, id)` → en rad
+- [x] Alla svar respekterar `exposed_columns`
+- [x] Verifierat live: en riktig MCP-session hämtar felkoder
 
 ---
 
