@@ -1,21 +1,24 @@
 #
-# docker-compose.yml — AgentTable
+# docker-compose.yml — AgentTable on Easypanel
 #
 # One container: FastAPI serves web UI + API + MCP.
 # SQLite persists in /data (mounted as a Docker volume).
+# Traefik (managed by Easypanel) terminates HTTPS for us.
 #
-# Local dev: `docker compose up` → http://localhost:${APP_PORT:-8081}
+# IMPORTANT: We use `expose:` instead of `ports:` so Easypanel's
+# auto-generated override doesn't try to bind the host port (often taken
+# by Traefik itself) — same learning as agentanbud. Traefik reaches the
+# container via the Docker network on port 8080 directly.
 #
-# Easypanel (Sprint 4, #17): switch `ports:` to `expose: ["8080"]` so
-# Easypanel's auto-generated override doesn't try to bind the host port
-# (often taken by Traefik) — same learning as agentanbud. Traefik reaches
-# the container via the Docker network on port 8080 directly.
+# Local dev without Easypanel:
+#   docker build -t agenttable . && docker run -p 8081:8080 -v ./data:/data agenttable
+# or run uvicorn directly (see README).
 #
 services:
   app:
     build: .
-    ports:
-      - "${APP_PORT:-8081}:8080"
+    expose:
+      - "8080"
     volumes:
       - ./data:/data
     environment:
@@ -23,4 +26,6 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       # Admin auth — when set, mutating endpoints require X-Admin-Key
       - ADMIN_API_KEY=${ADMIN_API_KEY:-}
+      # Company data: require the key for MCP reads too (recommended in prod)
+      - MCP_REQUIRE_KEY=${MCP_REQUIRE_KEY:-true}
     restart: unless-stopped

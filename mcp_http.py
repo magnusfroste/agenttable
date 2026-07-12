@@ -31,9 +31,14 @@ SERVER_VERSION = "0.1.0"
 
 # Admin key gates the write tools (import_csv/upsert_rows/delete_dataset).
 # When unset (local dev), everything is open — matching REST _require_admin.
-# NOTE: KICKOFF says reads may also become keyed (company data) — decided in
-# Sprint 4 (#15), together with Cloudflare Access Service Token support.
 ADMIN_API_KEY = os.environ.get("ADMIN_API_KEY", "")
+
+# Company data (KICKOFF/#15): set MCP_REQUIRE_KEY=true to gate READS too —
+# tools/list and every tools/call then require X-Admin-Key. Use this when
+# /mcp is excluded from Cloudflare Access so the agent can reach it.
+# (CF Access Service Token validation is the alternative, decided in the
+# CF dashboard; the app-side JWT check is future Sprint 4 work.)
+MCP_REQUIRE_KEY = os.environ.get("MCP_REQUIRE_KEY", "").lower() in ("1", "true", "yes")
 
 
 def _is_authed(request: Request) -> bool:
@@ -163,6 +168,14 @@ async def mcp_post(request: Request):
             return Response(status_code=204, headers={**_cors_headers(), "mcp-session-id": session_id})
         elif method == "ping":
             result = {}  # MCP keepalive
+        elif method in ("tools/list", "tools/call") and MCP_REQUIRE_KEY and not _is_authed(request):
+            return JSONResponse(
+                {"jsonrpc": "2.0", "id": rpc_id,
+                 "error": {"code": -32001,
+                           "message": "This MCP server requires the X-Admin-Key header."}},
+                status_code=401,
+                headers={**_cors_headers(), "mcp-session-id": session_id},
+            )
         elif method == "tools/list":
             result = {"tools": _tool_list(_is_authed(request))}
         elif method == "tools/call":

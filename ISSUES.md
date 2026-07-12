@@ -25,7 +25,7 @@ Kopiera från `../agentanbud`: `app/db.py`, `app/main.py` (struktur), `mcp_http.
 ### #3 Tom app bootar + healthcheck  · feature · S
 - [x] `GET /api/health` → `{"ok": true}`
 - [x] `GET /` renderar base.html-skalet (namn: AgentTable)
-- [ ] `docker compose up` → nåbar på localhost
+- [x] `docker compose up` → nåbar på localhost
 - [x] Cache-busting (`asset_ver`) + `env.globals` (abs/min/max) kvar
 
 ### #4 Rebranding + config  · chore · S
@@ -102,8 +102,8 @@ Kopiera från `../agentanbud`: `app/db.py`, `app/main.py` (struktur), `mcp_http.
 **Mål:** säker drift bakom Cloudflare-tunneln, agent kan nå MCP.
 
 ### #15 Auth-modell  · infra · M
-- [ ] Skriv alltid bakom `X-Admin-Key`
-- [ ] Beslut: är läsning öppen eller keyed? (företagsdata → troligen keyed)
+- [x] Skriv alltid bakom `X-Admin-Key`
+- [x] Beslut: läsning keyed i prod via `MCP_REQUIRE_KEY=true` (default i compose)
 - [ ] `/mcp` accepterar BÅDE `X-Admin-Key` OCH Cloudflare Access Service Token
       (`CF-Access-Client-Id`/`CF-Access-Client-Secret`) → välj i CF-dashboard
 

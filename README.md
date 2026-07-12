@@ -32,10 +32,42 @@ docker compose up --build
 |---|---|---|
 | `DB_PATH` | `/data/application.db` | SQLite-fil (volym i Docker) |
 | `ADMIN_API_KEY` | *(tom = öppet)* | `X-Admin-Key` för skrivning. Sätt alltid i produktion. |
-| `APP_PORT` | `8081` | Host-port för docker compose |
+| `MCP_REQUIRE_KEY` | `false` (lokalt) / `true` (compose) | Kräv nyckel även för MCP-läsning (företagsdata) |
 | `LOG_LEVEL` | `INFO` | Python-loggnivå |
+
+## MCP
+
+Endpoint: `POST /mcp` (JSON-RPC 2.0, Streamable HTTP). Läsverktyg:
+`list_datasets`, `describe_dataset`, `search_rows`, `get_row` — alla svar
+begränsas till kolumnerna som exponerats per dataset (väljs i webbvyn).
+
+Klient-konfig (t.ex. Claude Code / Hermes):
+
+```json
+{
+  "mcpServers": {
+    "agenttable": {
+      "url": "https://<din-hostname>/mcp",
+      "transport": "streamable-http",
+      "headers": { "X-Admin-Key": "<nyckel>" }
+    }
+  }
+}
+```
+
+## Deploy (Easypanel bakom Cloudflare-tunnel)
+
+1. Skapa en App-service i Easypanel från detta GitHub-repo (Dockerfile-build).
+2. Sätt env: `ADMIN_API_KEY` (obligatorisk!), `MCP_REQUIRE_KEY=true`,
+   `DB_PATH=/data/application.db`; montera en volym på `/data`.
+3. Lägg till en hostname i den befintliga Cloudflare-tunneln → appens
+   interna port 8080.
+4. Cloudflare Access-policy för människor (webb-UI). Agenten når `/mcp`
+   med `X-Admin-Key` — antingen via Access Service Token eller genom att
+   exkludera `/mcp` från Access (nyckeln skyddar ändå).
 
 ## Status
 
-Sprint 0 (skelett) klar — appen bootar, healthcheck + tomt MCP-endpoint.
-Nästa: CSV-upload + tabellvy (Sprint 1–2), MCP-läsverktyg (Sprint 3).
+Sprint 0–3 klara: CSV-upload, tabellvy (Tabulator, server-side sök),
+MCP-läsverktyg med exposed_columns. Kvar: keyed skriv-verktyg på MCP
+(#16) och app-sidig CF Access Service Token-validering (#15, valfri).
