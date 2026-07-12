@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Datasets{% endblock %}
+{% block content %}
+<section class="container">
+  <h1>Datasets</h1>
+  {% if datasets %}
+  <table class="table">
+    <thead>
+      <tr><th>Namn</th><th>Rader</th><th>Skapad</th></tr>
+    </thead>
+    <tbody>
+      {% for d in datasets %}
+      <tr>
+        <td><a href="/d/{{ d.slug }}">{{ d.name }}</a></td>
+        <td>{{ d.row_count | format_num }}</td>
+        <td class="muted">{{ d.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Inga dataset ännu. CSV-upload kommer i Sprint 1 —
+  ladda upp en CSV så hamnar den här.</p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+#
+# docker-compose.yml — AgentTable
+#
+# One container: FastAPI serves web UI + API + MCP.
+# SQLite persists in /data (mounted as a Docker volume).
+#
+# Local dev: `docker compose up` → http://localhost:${APP_PORT:-8081}
+#
+# Easypanel (Sprint 4, #17): switch `ports:` to `expose: ["8080"]` so
+# Easypanel's auto-generated override doesn't try to bind the host port
+# (often taken by Traefik) — same learning as agentanbud. Traefik reaches
+# the container via the Docker network on port 8080 directly.
+#
+services:
+  app:
+    build: .
+    ports:
+      - "${APP_PORT:-8081}:8080"
+    volumes:
+      - ./data:/data
+    environment:
+      - DB_PATH=/data/application.db
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      # Admin auth — when set, mutating endpoints require X-Admin-Key
+      - ADMIN_API_KEY=${ADMIN_API_KEY:-}
+    restart: unless-stopped
