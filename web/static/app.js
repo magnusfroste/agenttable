@@ -57,6 +57,10 @@
     return key;
   }
 
+  // Shared with page-level scripts (dataset.html)
+  window.atGetAdminKey = getAdminKey;
+  window.atClearAdminKey = function () { localStorage.removeItem(ADMIN_KEY_STORAGE); };
+
   // Delete a dataset (keyed). Called from index.html.
   window.atDeleteDataset = async function (slug, name) {
     if (!confirm('Radera "' + name + '" och alla dess rader?')) return;

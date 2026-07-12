@@ -2822,3 +2822,82 @@ pre code {
   transition: background var(--transition);
 }
 .upload-form button:hover { background: var(--accent-hover); }
+
+.table-toolbar { margin: 1rem 0; }
+.table-toolbar input[type="search"] {
+  font: inherit;
+  width: 100%;
+  max-width: 420px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+}
+
+#grid {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.exposed-panel { margin-top: 1.5rem; }
+.exposed-panel summary { cursor: pointer; font-weight: 600; }
+.exposed-panel form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+.exposed-col { display: inline-flex; gap: 0.35rem; align-items: center; font-weight: 400; }
+.exposed-panel button {
+  font: inherit;
+  padding: 0.35rem 1rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+/* Tabulator — follow app theme (the simple theme is light-only) */
+#grid.tabulator {
+  background: var(--surface);
+  color: var(--fg);
+  border: none;
+  font-size: 0.9rem;
+}
+#grid.tabulator .tabulator-header,
+#grid.tabulator .tabulator-header .tabulator-col {
+  background: var(--surface-2);
+  color: var(--fg);
+  border-color: var(--border);
+}
+#grid.tabulator .tabulator-header .tabulator-col .tabulator-header-filter input {
+  font: inherit;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+}
+#grid.tabulator .tabulator-row {
+  background: var(--surface);
+  color: var(--fg);
+  border-color: var(--border);
+}
+#grid.tabulator .tabulator-row.tabulator-row-even { background: var(--surface-2); }
+#grid.tabulator .tabulator-row .tabulator-cell { border-color: var(--border); }
+#grid.tabulator .tabulator-footer {
+  background: var(--surface-2);
+  color: var(--fg);
+  border-color: var(--border);
+}
+#grid.tabulator .tabulator-footer .tabulator-page,
+#grid.tabulator .tabulator-footer .tabulator-page-size {
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--border-2);
+}
+#grid.tabulator .tabulator-footer .tabulator-page.active { color: var(--accent); }

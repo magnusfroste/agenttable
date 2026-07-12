@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ ds.name }}{% endblock %}
+{% block head_extra %}
+<link rel="stylesheet" href="https://unpkg.com/tabulator-tables@5.6.1/dist/css/tabulator_simple.min.css" />
+<script src="https://unpkg.com/tabulator-tables@5.6.1/dist/js/tabulator.min.js" defer></script>
+{% endblock %}
+{% block content %}
+<section class="container">
+  <h1>{{ ds.name }}</h1>
+  <p class="muted">{{ ds.row_count | format_num }} rader · {{ ds.columns | length }} kolumner
+  · skapad {{ ds.created_at }}</p>
+
+  <div class="table-toolbar">
+    <input type="search" id="q" placeholder="Fritextsök i alla kolumner…" />
+  </div>
+  <div id="grid"></div>
+
+  <details class="exposed-panel">
+    <summary>MCP-exponering
+      <span class="muted">({% if ds.exposed_columns is none %}alla kolumner
+      {%- else %}{{ ds.exposed_columns | length }} av {{ ds.columns | length }} kolumner{% endif %})</span>
+    </summary>
+    <p class="muted">Välj vilka kolumner agenter får se via MCP-verktygen.
+    Alla ikryssade = allt exponeras.</p>
+    <form id="exposed-form">
+      {% for col in ds.columns %}
+      <label class="exposed-col">
+        <input type="checkbox" name="col" value="{{ col }}"
+               {% if ds.exposed_columns is none or col in ds.exposed_columns %}checked{% endif %} />
+        {{ col }}
+      </label>
+      {% endfor %}
+      <button type="submit">Spara</button>
+      <span id="exposed-status" class="muted"></span>
+    </form>
+  </details>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const SLUG = {{ ds.slug | tojson }};
+  const COLUMNS = {{ ds.columns | tojson }};
+
+  // --- Tabulator: remote pagination + remote header filters + free text (#9, #10)
+  const table = new Tabulator('#grid', {
+    layout: 'fitDataStretch',
+    ajaxURL: '/api/datasets/' + encodeURIComponent(SLUG) + '/rows',
+    pagination: true,
+    paginationMode: 'remote',
+    paginationSize: 50,
+    paginationSizeSelector: [25, 50, 100, 200],
+    filterMode: 'remote',
+    ajaxURLGenerator: function (url, config, params) {
+      const p = new URLSearchParams({ page: params.page, size: params.size });
+      if (params.filter && params.filter.length) {
+        const f = {};
+        params.filter.forEach(x => { f[x.field] = x.value; });
+        p.set('filters', JSON.stringify(f));
+      }
+      const q = document.getElementById('q').value.trim();
+      if (q) p.set('q', q);
+      return url + '?' + p.toString();
+    },
+    ajaxResponse: (url, params, resp) => ({ last_page: resp.last_page, data: resp.rows }),
+    columns: [
+      { title: 'id', field: 'id', width: 80 },
+      ...COLUMNS.map(c => ({ title: c, field: c, headerFilter: 'input' })),
+    ],
+  });
+
+  // Free text search — debounced, resets to page 1
+  let t = null;
+  document.getElementById('q').addEventListener('input', function () {
+    clearTimeout(t);
+    t = setTimeout(() => table.setData(), 300);
+  });
+
+  // --- exposed_columns (#11) — keyed save, admin key via localStorage
+  document.getElementById('exposed-form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const checked = [...this.querySelectorAll('input[name=col]:checked')].map(i => i.value);
+    const status = document.getElementById('exposed-status');
+    // All checked = expose everything (stored as null)
+    const columns = checked.length === COLUMNS.length ? null : checked;
+    const res = await fetch('/api/datasets/' + encodeURIComponent(SLUG) + '/exposed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': window.atGetAdminKey() },
+      body: JSON.stringify({ columns: columns }),
+    });
+    if (res.status === 401) {
+      window.atClearAdminKey();
+      status.textContent = 'Fel admin-nyckel — försök igen.';
+      return;
+    }
+    status.textContent = res.ok ? 'Sparat ✓' : 'Kunde inte spara (HTTP ' + res.status + ')';
+  });
+});
+</script>
+{% endblock %}

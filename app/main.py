@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import logging
+import math
 import os
 from pathlib import Path
 from typing import Optional
@@ -24,6 +26,7 @@ from .csv_import import CsvError, parse_csv
 from .db import (
     connect, init_db,
     create_dataset, delete_dataset, get_dataset, insert_rows, list_datasets,
+    search_rows, set_exposed_columns,
 )
 
 # MCP-over-HTTP is optional — only loaded if mcp_http module is present.
@@ -153,11 +156,58 @@ def create_app(db_path: Optional[str] = None) -> FastAPI:
                           error="Kunde inte läsa filen — är det verkligen en CSV?")
         return render("_upload_result.html", result=result)
 
+    @app.get("/d/{slug}", response_class=HTMLResponse)
+    def dataset_page(slug: str, request: Request):
+        conn = connect(db)
+        try:
+            ds = get_dataset(conn, slug)
+        finally:
+            conn.close()
+        if not ds:
+            raise HTTPException(status_code=404, detail="dataset not found")
+        return render("dataset.html", request=request, ds=ds,
+                      admin_required=bool(ADMIN_API_KEY))
+
     # ---- API ----
 
     @app.get("/api/health")
     def health():
         return JSONResponse({"ok": True})
+
+    @app.get("/api/datasets/{slug}/rows")
+    def api_rows(
+        slug: str,
+        page: int = 1,
+        size: int = DEFAULT_PAGE_SIZE,
+        q: str = "",
+        filters: str = "",
+    ):
+        """Server-side pagination + free text (q) + per-column filters
+        (filters = JSON object {column: substring})."""
+        size = max(1, min(size, MAX_PAGE_SIZE))
+        page = max(1, page)
+        try:
+            filter_dict = json.loads(filters) if filters else {}
+            if not isinstance(filter_dict, dict):
+                raise ValueError
+        except ValueError:
+            raise HTTPException(status_code=400, detail="filters must be a JSON object")
+        conn = connect(db)
+        try:
+            ds = get_dataset(conn, slug)
+            if not ds:
+                raise HTTPException(status_code=404, detail="dataset not found")
+            total, rows = search_rows(
+                conn, ds["id"], query=q.strip() or None,
+                filters=filter_dict, limit=size, offset=(page - 1) * size,
+            )
+        finally:
+            conn.close()
+        return JSONResponse({
+            "page": page, "size": size, "total": total,
+            "last_page": max(1, math.ceil(total / size)),
+            "rows": rows,
+        })
 
     @app.get("/api/datasets")
     def api_list_datasets():
@@ -182,6 +232,26 @@ def create_app(db_path: Optional[str] = None) -> FastAPI:
         except CsvError as exc:
             raise HTTPException(status_code=400, detail=str(exc))
         return JSONResponse(result, status_code=201)
+
+    @app.post("/api/datasets/{slug}/exposed")
+    async def api_set_exposed(slug: str, request: Request):
+        """Keyed: set which columns MCP may show. Body: {"columns": [...] | null}."""
+        _require_admin(request)
+        try:
+            body = await request.json()
+        except Exception:
+            raise HTTPException(status_code=400, detail="invalid JSON body")
+        columns = body.get("columns")
+        if columns is not None and not isinstance(columns, list):
+            raise HTTPException(status_code=400, detail="columns must be a list or null")
+        conn = connect(db)
+        try:
+            if not set_exposed_columns(conn, slug, columns):
+                raise HTTPException(status_code=404, detail="dataset not found")
+            ds = get_dataset(conn, slug)
+        finally:
+            conn.close()
+        return JSONResponse({"slug": slug, "exposed_columns": ds["exposed_columns"]})
 
     @app.delete("/api/datasets/{slug}")
     def api_delete_dataset(slug: str, request: Request):

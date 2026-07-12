@@ -140,6 +140,53 @@ def delete_dataset(conn: sqlite3.Connection, slug: str) -> bool:
     return True
 
 
+def _json_path(column: str) -> str:
+    """JSON path for a CSV column name. Quotes stripped — they can't be
+    escaped inside a SQLite JSON path literal."""
+    return '$."' + column.replace('"', "") + '"'
+
+
+def search_rows(
+    conn: sqlite3.Connection,
+    dataset_id: int,
+    query: Optional[str] = None,
+    filters: Optional[dict] = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[int, list[dict]]:
+    """Free text over the whole row (LIKE on data_json) + per-column
+    substring filters via json_extract. Returns (total, rows) where each
+    row is {id, <column>: <value>, …}. 8000 JSON rows scan in milliseconds."""
+    where = ["dataset_id = ?"]
+    params: list = [dataset_id]
+    if query:
+        where.append("data_json LIKE ?")
+        params.append(f"%{query}%")
+    for col, val in (filters or {}).items():
+        if val is None or val == "":
+            continue
+        where.append("json_extract(data_json, ?) LIKE ?")
+        params.extend([_json_path(col), f"%{val}%"])
+    cond = " AND ".join(where)
+    total = conn.execute(f"SELECT COUNT(*) FROM rows WHERE {cond}", params).fetchone()[0]
+    rows = [
+        {"id": r["id"], **json.loads(r["data_json"])}
+        for r in conn.execute(
+            f"SELECT id, data_json FROM rows WHERE {cond} ORDER BY id LIMIT ? OFFSET ?",
+            params + [limit, offset],
+        )
+    ]
+    return total, rows
+
+
+def get_row(conn: sqlite3.Connection, dataset_id: int, row_id: int) -> Optional[dict]:
+    r = conn.execute(
+        "SELECT id, data_json FROM rows WHERE dataset_id = ? AND id = ?",
+        (dataset_id, row_id),
+    ).fetchone()
+    return {"id": r["id"], **json.loads(r["data_json"])} if r else None
+
+
 def set_exposed_columns(conn: sqlite3.Connection, slug: str, columns: Optional[list[str]]) -> bool:
     """Set which columns MCP may show (None = all). Returns True if dataset exists."""
     ds = get_dataset(conn, slug)

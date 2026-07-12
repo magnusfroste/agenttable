@@ -64,18 +64,18 @@ Kopiera från `../agentanbud`: `app/db.py`, `app/main.py` (struktur), `mcp_http.
 **Mål:** visa och söka i datan i webben.
 
 ### #9 Dataset-detaljsida med Tabulator  · feature · M
-- [ ] `/d/{slug}` renderar Tabulator (CDN, ingen build) över datan
-- [ ] Sortera/filtrera/paginera i klienten för mindre dataset
-- [ ] Data via `GET /api/datasets/{slug}/rows?page=&q=`
+- [x] `/d/{slug}` renderar Tabulator (CDN, ingen build) över datan
+- [x] Sortera/filtrera/paginera i klienten för mindre dataset
+- [x] Data via `GET /api/datasets/{slug}/rows?page=&q=`
 
 ### #10 Server-side sök/filter (stora dataset)  · feature · M
-- [ ] `search_rows`-query i db: fritext över alla kolumner + per-kolumn-filter (`json_extract`)
-- [ ] HTMX-partial för sökresultat (för 8000+ rader utan att skicka allt)
-- [ ] Paginering server-side
+- [x] `search_rows`-query i db: fritext över alla kolumner + per-kolumn-filter (`json_extract`)
+- [x] ~~HTMX-partial~~ Löst via Tabulator remote-läge i stället (paginering/filter server-side, skickar aldrig allt)
+- [x] Paginering server-side
 
 ### #11 exposed_columns-UI  · feature · S
-- [ ] Välj vilka kolumner som exponeras via MCP (checkboxar, keyed)
-- [ ] Sparas i `exposed_columns_json` (null = alla)
+- [x] Välj vilka kolumner som exponeras via MCP (checkboxar, keyed)
+- [x] Sparas i `exposed_columns_json` (null = alla)
 
 ---
 
