@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Ladda upp{% endblock %}
+{% block content %}
+<section class="container">
+  <h1>Ladda upp CSV</h1>
+  <p class="muted">Rubrikraden blir kolumnnamn. Avgränsare (<code>,</code> <code>;</code> tab)
+  och BOM hanteras automatiskt. Allt lagras som text.</p>
+
+  <form hx-post="/upload" hx-target="#upload-result" hx-encoding="multipart/form-data"
+        class="upload-form">
+    <label>
+      CSV-fil
+      <input type="file" name="file" accept=".csv,text/csv" required />
+    </label>
+    <label>
+      Namn <span class="muted">(valfritt — annars filnamnet)</span>
+      <input type="text" name="name" placeholder="t.ex. Felkoder 2026" />
+    </label>
+    {% if admin_required %}
+    <label>
+      Admin-nyckel
+      <input type="password" name="admin_key" autocomplete="off" required />
+    </label>
+    {% endif %}
+    <button type="submit">Ladda upp</button>
+  </form>
+
+  <div id="upload-result"></div>
+</section>
+{% endblock %}

@@ -44,4 +44,35 @@
   updateToggleIcon();
 
   document.getElementById('theme-toggle')?.addEventListener('click', nextTheme);
+
+  // === Admin key (localStorage, prompted on first use — agentanbud pattern) ===
+  const ADMIN_KEY_STORAGE = 'at-admin-key';
+
+  function getAdminKey() {
+    let key = localStorage.getItem(ADMIN_KEY_STORAGE);
+    if (!key) {
+      key = prompt('Admin-nyckel (ADMIN_API_KEY):') || '';
+      if (key) localStorage.setItem(ADMIN_KEY_STORAGE, key);
+    }
+    return key;
+  }
+
+  // Delete a dataset (keyed). Called from index.html.
+  window.atDeleteDataset = async function (slug, name) {
+    if (!confirm('Radera "' + name + '" och alla dess rader?')) return;
+    const res = await fetch('/api/datasets/' + encodeURIComponent(slug), {
+      method: 'DELETE',
+      headers: { 'X-Admin-Key': getAdminKey() },
+    });
+    if (res.status === 401) {
+      localStorage.removeItem(ADMIN_KEY_STORAGE);
+      alert('Fel admin-nyckel — försök igen.');
+      return;
+    }
+    if (!res.ok) {
+      alert('Kunde inte radera (HTTP ' + res.status + ').');
+      return;
+    }
+    location.reload();
+  };
 })();

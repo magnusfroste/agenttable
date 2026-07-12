@@ -1,0 +1,9 @@
+{% if error %}
+<p class="error" role="alert">⚠ {{ error }}</p>
+{% else %}
+<div class="card">
+  <p><strong>{{ result.name }}</strong> importerad — {{ result.rows | format_num }} rader,
+  {{ result.columns | length }} kolumner.</p>
+  <p><a href="/d/{{ result.slug }}">Öppna dataset →</a></p>
+</div>
+{% endif %}

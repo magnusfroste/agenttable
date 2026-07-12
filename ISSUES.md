@@ -38,25 +38,25 @@ Kopiera från `../agentanbud`: `app/db.py`, `app/main.py` (struktur), `mcp_http.
 **Mål:** ladda upp en CSV och få in den i SQLite.
 
 ### #5 Schema: datasets + rows  · feature · M
-- [ ] `datasets` (slug, name, columns_json, exposed_columns_json, row_count)
-- [ ] `rows` (dataset_id, data_json) + index
-- [ ] `init_db` + idempotent `_migrate`
-- [ ] db-hjälpare: `create_dataset`, `insert_rows`, `get_dataset`, `list_datasets`
+- [x] `datasets` (slug, name, columns_json, exposed_columns_json, row_count)
+- [x] `rows` (dataset_id, data_json) + index
+- [x] `init_db` + idempotent `_migrate`
+- [x] db-hjälpare: `create_dataset`, `insert_rows`, `get_dataset`, `list_datasets`
 
 ### #6 CSV-upload endpoint (keyed)  · feature · M
-- [ ] `POST /api/datasets` (multipart CSV) bakom `X-Admin-Key`
-- [ ] Parsa header → `columns_json`; varje rad → `rows.data_json`
-- [ ] Robust: BOM, avgränsare (`,`/`;`), tomma rader, dubbla kolumnnamn
-- [ ] Returnerar slug + antal rader; testat med ~8000 rader
+- [x] `POST /api/datasets` (multipart CSV) bakom `X-Admin-Key`
+- [x] Parsa header → `columns_json`; varje rad → `rows.data_json`
+- [x] Robust: BOM, avgränsare (`,`/`;`), tomma rader, dubbla kolumnnamn
+- [x] Returnerar slug + antal rader; testat med ~8000 rader
 
 ### #7 Upload-sida  · feature · S
-- [ ] `/upload` (Jinja) — filväljare, namn, submit via HTMX
-- [ ] Fel visas tydligt (fel format, tom fil)
-- [ ] Vid klart: länk till dataset-vyn
+- [x] `/upload` (Jinja) — filväljare, namn, submit via HTMX
+- [x] Fel visas tydligt (fel format, tom fil)
+- [x] Vid klart: länk till dataset-vyn
 
 ### #8 Dataset-lista + radering  · feature · S
-- [ ] `/` listar dataset (namn, antal rader, datum)
-- [ ] Radera dataset (keyed) — tar bort rows också
+- [x] `/` listar dataset (namn, antal rader, datum)
+- [x] Radera dataset (keyed) — tar bort rows också
 
 ---
 

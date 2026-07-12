@@ -1,16 +1,18 @@
-"""SQLite helpers — connection, schema bootstrap, migrations.
+"""SQLite helpers — connection, schema bootstrap, migrations, dataset CRUD.
 
 Same pattern as agentanbud: connect() with WAL + Row factory,
 init_db() runs schema.sql idempotently, _migrate() adds columns
-via guarded ALTER TABLE. Dataset/row helpers land in Sprint 1 (#5).
+via guarded ALTER TABLE.
 """
 from __future__ import annotations
 
+import json
 import logging
 import re
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Iterable, Optional
 
 LOG = logging.getLogger(__name__)
 
@@ -64,3 +66,90 @@ def slugify(text: str) -> str:
         s = s.replace(a, b)
     s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
     return s[:80] or "dataset"
+
+
+def unique_slug(conn: sqlite3.Connection, base: str) -> str:
+    """Return `base`, or base-2, base-3… if taken by another dataset."""
+    slug = base
+    n = 1
+    while True:
+        row = conn.execute("SELECT id FROM datasets WHERE slug = ?", (slug,)).fetchone()
+        if not row:
+            return slug
+        n += 1
+        slug = f"{base}-{n}"
+
+
+# ----- Dataset helpers -------------------------------------------------------
+
+
+def _dataset_dict(row: sqlite3.Row) -> dict:
+    d = dict(row)
+    d["columns"] = json.loads(d.pop("columns_json") or "[]")
+    exposed = d.pop("exposed_columns_json", None)
+    d["exposed_columns"] = json.loads(exposed) if exposed else None  # None = alla
+    return d
+
+
+def create_dataset(conn: sqlite3.Connection, name: str, columns: list[str]) -> dict:
+    """Insert a new dataset. Returns {id, slug}."""
+    slug = unique_slug(conn, slugify(name))
+    cur = conn.execute(
+        "INSERT INTO datasets (slug, name, columns_json) VALUES (?, ?, ?)",
+        (slug, name, json.dumps(columns, ensure_ascii=False)),
+    )
+    conn.commit()
+    return {"id": cur.lastrowid, "slug": slug}
+
+
+def insert_rows(conn: sqlite3.Connection, dataset_id: int, rows: Iterable[dict]) -> int:
+    """Bulk-insert rows (one JSON object per CSV row) and refresh row_count."""
+    conn.executemany(
+        "INSERT INTO rows (dataset_id, data_json) VALUES (?, ?)",
+        ((dataset_id, json.dumps(r, ensure_ascii=False)) for r in rows),
+    )
+    conn.execute(
+        "UPDATE datasets SET row_count = (SELECT COUNT(*) FROM rows WHERE dataset_id = ?) WHERE id = ?",
+        (dataset_id, dataset_id),
+    )
+    conn.commit()
+    row = conn.execute("SELECT row_count FROM datasets WHERE id = ?", (dataset_id,)).fetchone()
+    return row[0] if row else 0
+
+
+def get_dataset(conn: sqlite3.Connection, slug: str) -> Optional[dict]:
+    row = conn.execute("SELECT * FROM datasets WHERE slug = ?", (slug,)).fetchone()
+    return _dataset_dict(row) if row else None
+
+
+def list_datasets(conn: sqlite3.Connection) -> list[dict]:
+    return [
+        _dataset_dict(r)
+        for r in conn.execute("SELECT * FROM datasets ORDER BY created_at DESC, id DESC")
+    ]
+
+
+def delete_dataset(conn: sqlite3.Connection, slug: str) -> bool:
+    """Delete a dataset and all its rows. Returns True if it existed."""
+    row = conn.execute("SELECT id FROM datasets WHERE slug = ?", (slug,)).fetchone()
+    if not row:
+        return False
+    conn.execute("DELETE FROM rows WHERE dataset_id = ?", (row[0],))
+    conn.execute("DELETE FROM datasets WHERE id = ?", (row[0],))
+    conn.commit()
+    return True
+
+
+def set_exposed_columns(conn: sqlite3.Connection, slug: str, columns: Optional[list[str]]) -> bool:
+    """Set which columns MCP may show (None = all). Returns True if dataset exists."""
+    ds = get_dataset(conn, slug)
+    if not ds:
+        return False
+    # Only keep names that actually exist in the dataset
+    value = None
+    if columns is not None:
+        valid = [c for c in columns if c in ds["columns"]]
+        value = json.dumps(valid, ensure_ascii=False)
+    conn.execute("UPDATE datasets SET exposed_columns_json = ? WHERE slug = ?", (value, slug))
+    conn.commit()
+    return True

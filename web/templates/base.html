@@ -11,6 +11,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='2' fill='%232563eb'/%3E%3Cpath d='M2 6h12M2 10h12M6 3v10M11 3v10' stroke='white' stroke-width='1.2'/%3E%3C/svg%3E" />
 
   <link rel="stylesheet" href="/static/style.css?v={{ asset_ver }}" />
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   <script defer src="/static/app.js?v={{ asset_ver }}"></script>
   {% block head_extra %}{% endblock %}
 </head>
@@ -24,6 +25,7 @@
       </a>
       <nav>
         <a href="/" class="{% set p=request.url.path if request else '' %}{% if p == '/' %}active{% endif %}">Datasets</a>
+        <a href="/upload" class="{% set p=request.url.path if request else '' %}{% if p.startswith('/upload') %}active{% endif %}">Ladda upp</a>
         <button id="theme-toggle" class="theme-toggle" aria-label="Växla mörkt/ljust läge" title="Mörkt/ljust läge">◐</button>
       </nav>
     </div>

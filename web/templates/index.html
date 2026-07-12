@@ -6,21 +6,22 @@
   {% if datasets %}
   <table class="table">
     <thead>
-      <tr><th>Namn</th><th>Rader</th><th>Skapad</th></tr>
+      <tr><th>Namn</th><th>Rader</th><th>Kolumner</th><th>Skapad</th><th></th></tr>
     </thead>
     <tbody>
       {% for d in datasets %}
       <tr>
         <td><a href="/d/{{ d.slug }}">{{ d.name }}</a></td>
         <td>{{ d.row_count | format_num }}</td>
+        <td class="muted">{{ d.columns | length }}</td>
         <td class="muted">{{ d.created_at }}</td>
+        <td><button class="btn-danger" onclick="atDeleteDataset('{{ d.slug }}', '{{ d.name }}')">Radera</button></td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
   {% else %}
-  <p class="muted">Inga dataset ännu. CSV-upload kommer i Sprint 1 —
-  ladda upp en CSV så hamnar den här.</p>
+  <p class="muted">Inga dataset ännu — <a href="/upload">ladda upp en CSV</a> så hamnar den här.</p>
   {% endif %}
 </section>
 {% endblock %}
