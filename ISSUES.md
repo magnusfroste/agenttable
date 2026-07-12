@@ -13,24 +13,24 @@ När GitHub-repot finns kan varje issue klistras in som ett `gh issue create`.
 Kopiera från `../agentanbud`: `app/db.py`, `app/main.py` (struktur), `mcp_http.py`,
 `mcp_server.py`, `Dockerfile`, `docker-compose.yml`, `.env.example`,
 `web/templates/base.html`, `web/static/style.css`.
-- [ ] `git init`, `.gitignore` (data/, .env, __pycache__)
-- [ ] Filerna kopierade och importerar utan fel
-- [ ] `ADMIN_API_KEY` + `DB_PATH` i `.env.example`
+- [x] `git init`, `.gitignore` (data/, .env, __pycache__)
+- [x] Filerna kopierade och importerar utan fel
+- [x] `ADMIN_API_KEY` + `DB_PATH` i `.env.example`
 
 ### #2 Riv upphandlings-specifikt  · chore · S
-- [ ] Bort: `scraper/`, `orchestrator`, cron, `tenders`-schema, providers/kunskap/blogg
-- [ ] Bort: upphandlings-specifika MCP-verktyg och routes
-- [ ] Appen bootar utan död kod
+- [x] Bort: `scraper/`, `orchestrator`, cron, `tenders`-schema, providers/kunskap/blogg
+- [x] Bort: upphandlings-specifika MCP-verktyg och routes
+- [x] Appen bootar utan död kod
 
 ### #3 Tom app bootar + healthcheck  · feature · S
-- [ ] `GET /api/health` → `{"ok": true}`
-- [ ] `GET /` renderar base.html-skalet (namn: AgentTable)
+- [x] `GET /api/health` → `{"ok": true}`
+- [x] `GET /` renderar base.html-skalet (namn: AgentTable)
 - [ ] `docker compose up` → nåbar på localhost
-- [ ] Cache-busting (`asset_ver`) + `env.globals` (abs/min/max) kvar
+- [x] Cache-busting (`asset_ver`) + `env.globals` (abs/min/max) kvar
 
 ### #4 Rebranding + config  · chore · S
-- [ ] Titel/nav/footer → AgentTable
-- [ ] README (kort): vad appen gör, kör lokalt, env-vars
+- [x] Titel/nav/footer → AgentTable
+- [x] README (kort): vad appen gör, kör lokalt, env-vars
 
 ---
 
